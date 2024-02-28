@@ -1,0 +1,146 @@
+import * as bip32 from 'bip32';
+import * as bip39 from 'bip39';
+import {AesManager} from '@/assets/keystore/cryptos/aes_cbc';
+
+const Zero: number = 0;
+const ZeroQuote: number = 0x80000000;
+const PurposeBIP44: number = 0x8000002C; // 44' BIP44
+const PurposeBIP49: number = 0x80000031; // 49' BIP49
+const PurposeBIP84: number = 0x80000054; // 84' BIP84
+const Apostrophe: number = 0x80000000;
+const CoinType: number = 98055361;
+
+function GeneratePrivate(Seeds: string, pbkdf2Key: number[], MnemonicLang: string[]): KeyManager {
+    const newSeed = AesManager.decrypt(Seeds,pbkdf2Key);
+  //  bip39.setDefaultWordlist(MnemonicLang);
+    const Mnemonic = bip39.entropyToMnemonic(newSeed);
+    return  new KeyManager(Mnemonic, '');
+}
+
+class BipKey {
+    path: string;
+    Bip32Key: bip32.BIP32Interface;
+
+    constructor(path: string, Bip32Key: string) {
+        this.path = path;
+        this.passphrase = passphrase;
+        this.keys = {};
+    }
+    CreateAddr(AddrPre: string): [Uint8Array, Uint8Array, Uint8Array] {
+        const privk = ed25519.keyFromSeed(this.Bip32Key.privateKey);
+        const pub = privk.getPublic();
+        const addr = crypto.BuildAddr(AddrPre, pub);
+        return [addr, pub, privk];
+    }
+}
+
+class KeyManager {
+    mnemonic: string;
+    passphrase: string;
+    keys: { [path: string]: bip32.BIP32Interface };
+
+    constructor(mnemonic: string, passphrase: string) {
+        this.mnemonic = mnemonic;
+        this.passphrase = passphrase;
+        this.keys = {};
+    }
+
+    // static async GeneratePrivate(Seeds: Uint8Array, pbkdf2Key: Uint8Array, MnemonicLang: string[]): Promise<KeyManager> {
+    //     const newSeed = await DecryptCBCPbkdf2Key(Seeds, pbkdf2Key);
+    //     bip39.setDefaultWordlist(MnemonicLang);
+    //     const Mnemonic = bip39.entropyToMnemonic(Buffer.from(newSeed));
+    //     const km = new KeyManager(Mnemonic, '');
+    //     return km;
+    // }
+
+
+
+    GetKey(purpose: number, coinType: number, account: number, change: number, index: number): BipKey {
+        const path = `m/${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'/${change}/${index}`;
+        let key = this.getKey(path);
+        if (!key) {
+            const parent = this.GetChangeKey(purpose, coinType, account, change);
+            key = parent.derive(index);
+            this.setKey(path, key);
+        }
+        return { path, Bip32Key: key };
+    }
+
+    GetChangeKey(purpose: number, coinType: number, account: number, change: number): bip32.BIP32Interface {
+        const path = `m/${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'/${change}`;
+        let key = this.getKey(path);
+        if (!key) {
+            const parent = this.GetAccountKey(purpose, coinType, account);
+            key = parent.derive(change);
+            this.setKey(path, key);
+        }
+        return key;
+    }
+
+    GetAccountKey(purpose: number, coinType: number, account: number): bip32.BIP32Interface {
+        const path = `m/${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'`;
+        let key = this.getKey(path);
+        if (!key) {
+            const parent = this.GetCoinTypeKey(purpose, coinType);
+            key = parent.derive(account + Apostrophe);
+            this.setKey(path, key);
+        }
+        return key;
+    }
+
+    GetCoinTypeKey(purpose: number, coinType: number): bip32.BIP32Interface {
+        const path = `m/${purpose - Apostrophe}'/${coinType - Apostrophe}'`;
+        let key = this.getKey(path);
+        if (!key) {
+            const parent = this.GetPurposeKey(purpose);
+            key = parent.derive(coinType);
+            this.setKey(path, key);
+        }
+        return key;
+    }
+
+    GetPurposeKey(purpose: number): bip32.BIP32Interface {
+        const path = `m/${purpose - Apostrophe}'`;
+        let key = this.getKey(path);
+        if (!key) {
+            const parent = this.GetMasterKey();
+            key = parent.derive(purpose);
+            this.setKey(path, key);
+        }
+        return key;
+    }
+
+    GetMasterKey(): bip32.BIP32Interface {
+        const path = 'm';
+        let key = this.getKey(path);
+        if (!key) {
+            key = bip32.fromSeed(this.GetSeed());
+            this.setKey(path, key);
+        }
+        return key;
+    }
+
+    GetSeed(): Uint8Array {
+        return bip39.mnemonicToSeedSync(this.GetMnemonic(), this.GetPassphrase());
+    }
+
+    GetMnemonic(): string {
+        return this.mnemonic;
+    }
+
+    GetPassphrase(): string {
+        return this.passphrase;
+    }
+
+    getKey(path: string): bip32.BIP32Interface {
+        return this.keys[path];
+    }
+
+    setKey(path: string, key: bip32.BIP32Interface) {
+        this.keys[path] = key;
+    }
+}
+
+
+
+export { KeyManager, GeneratePrivate };

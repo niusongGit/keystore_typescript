@@ -1,0 +1,103 @@
+import * as bip39 from 'bip39';
+//import * as bip32 from 'bip32';
+//import * as bip32 from 'bitcoinjs-lib/types/bip32';
+
+ import BIP32Factory from 'bip32';
+ import * as ecc from 'tiny-secp256k1';
+import { BIP32Interface } from 'bip32';
+const bip32 = BIP32Factory(ecc);
+
+
+// import BIP32Factory from 'bip32';
+// import { ec as Elliptic } from 'elliptic';
+//
+// const elliptic = new Elliptic('secp256k1');
+//
+// // 使用默认的 BIP32 工厂方法，并传递 elliptic 作为 ec 参数
+// const bip32 = BIP32Factory(null);
+
+const ZeroQuote = 0x80000000;
+const PurposeBIP44 = 0x8000002C;
+const PurposeBIP49 = 0x80000031;
+const PurposeBIP84 = 0x80000054;
+const Apostrophe = 0x80000000;
+const CoinType = 98055361;
+
+export class KeyManager {
+    mnemonic: string;
+    passphrase: string;
+    keys: Map<string, any>;
+
+    constructor(mnemonic: string, passphrase: string) {
+        this.mnemonic = mnemonic;
+        this.passphrase = passphrase;
+        this.keys = new Map<string, any>();
+    }
+
+    private getKey(path: string): any | undefined {
+        return this.keys.get(path);
+    }
+
+    private setKey(path: string, key: any): void {
+        this.keys.set(path, key);
+    }
+
+    getMasterKey(): any {
+        const path = "m";
+        const existingKey = this.getKey(path);
+        if (existingKey) {
+            return existingKey;
+        }
+
+        const seed = bip39.mnemonicToSeedSync(this.mnemonic, this.passphrase);
+        const key = bip32.fromSeed(seed);
+
+        this.setKey(path, key);
+        return key;
+    }
+
+    getKeyByPath(path: string): any {
+        const existingKey = this.getKey(path);
+        if (existingKey) {
+            return existingKey;
+        }
+
+        const parentPath = path.substring(0, path.lastIndexOf('/'));
+        const parentKey = this.getKeyByPath(parentPath);
+
+        const index = parseInt(path.substring(path.lastIndexOf('/') + 1), 10);
+        const key = parentKey.derive(index);
+
+        this.setKey(path, key);
+        return key;
+    }
+
+    getKeyByPurpose(purpose: number): any {
+        const path = `m/${purpose - Apostrophe}'`;
+        return this.getKeyByPath(path);
+    }
+
+    getKeyByCoinType(purpose: number, coinType: number): any {
+        const purposeKey = this.getKeyByPurpose(purpose);
+        const path = `${purpose - Apostrophe}'/${coinType - Apostrophe}'`;
+        return this.getKeyByPath(path);
+    }
+
+    getKeyByAccount(purpose: number, coinType: number, account: number): any {
+        const coinTypeKey = this.getKeyByCoinType(purpose, coinType);
+        const path = `${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'`;
+        return this.getKeyByPath(path);
+    }
+
+    getKeyByChange(purpose: number, coinType: number, account: number, change: number): any {
+        const accountKey = this.getKeyByAccount(purpose, coinType, account);
+        const path = `${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'/${change}`;
+        return this.getKeyByPath(path);
+    }
+
+    getKeyByIndex(purpose: number, coinType: number, account: number, change: number, index: number): any {
+        const changeKey = this.getKeyByChange(purpose, coinType, account, change);
+        const path = `${purpose - Apostrophe}'/${coinType - Apostrophe}'/${account}'/${change}/${index}`;
+        return this.getKeyByPath(path);
+    }
+}

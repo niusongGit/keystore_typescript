@@ -1,0 +1,229 @@
+import * as bs58 from 'bs58'; // 请根据实际路径和文件名进行调整
+//import * as ripemd160 from "ripemd160";
+import CryptoJS from 'crypto-js'
+
+export type AddressCoin = Uint8Array;
+
+export function B58String(addr: AddressCoin): string {
+    if (addr.length <= 0) {
+        return "";
+    }
+
+    const lastByte = addr[addr.length - 1];
+   // const lastStr = String.fromCharCode(...bs58.encode(lastByte));
+    const lastStr = bs58.encode([lastByte]);
+    if (lastStr === ""){
+        return "";
+    }
+    const preLen = lastByte;
+    const preStr =  new TextDecoder().decode(addr.slice(0, preLen));
+    const centerStr = bs58.encode(addr.slice(preLen, addr.length - 1));
+
+    return preStr + centerStr + lastStr;
+}
+
+export function AddressFromB58String(str: string): AddressCoin {
+    if (str === '') {
+        return new Uint8Array();
+    }
+
+    const lastStr = str[str.length - 1];
+    const lastByte = bs58.decode(lastStr);
+    if (lastByte.length <= 0){
+        return new Uint8Array();
+    }
+    const preLen = lastByte[0];
+    if (preLen > str.length) {
+        return new Uint8Array();
+    }
+
+    const preStr = str.slice(0, preLen);
+    const preByte = new TextEncoder().encode(preStr);
+    const centerByte:Uint8Array  = bs58.decode(str.slice(preLen, str.length - 1));
+    // console.log(str.slice(preLen, str.length - 1))
+    // console.log("*******************")
+    // console.log(preStr)
+    // console.log("------------------")
+    // console.log(preByte)
+    // console.log(centerByte)
+    // console.log("==========================")
+    const bs = new Uint8Array(preByte.length + centerByte.length + lastByte.length);
+    bs.set(preByte,0);
+    bs.set(centerByte, preByte.length);
+    bs.set(lastByte, preByte.length + centerByte.length);
+
+    return bs;
+}
+
+
+export class Address {
+    public static buildAddress(pre: string, pubKey: Uint8Array): Uint8Array {
+        // 第一步，计算SHA-256哈希值
+        const publicSHA256 = this.sha256(pubKey);
+
+        // 第二步，计算RIPEMD-160哈希值
+        const publicRIPEMD160 = this.ripemd160(publicSHA256);
+
+        // 第三步，在上一步结果之间加入地址版本号
+        const buf = this.concatBuffers(this.strToBuffer(pre), publicRIPEMD160);
+
+        // 第四步，计算上一步结果的SHA-256哈希值
+        let temp = this.sha256(buf);
+
+        // 第五步，再次计算上一步结果的SHA-256哈希值
+        temp = this.sha256(temp);
+
+        // 第六步，取上一步结果的前4个字节，将其作为校验并加在第三步结果的后面
+        const checksum = temp.slice(0, 4);
+        const addressBytes = this.concatBuffers(buf, checksum);
+        const preLen = this.strToBuffer(pre).length;
+
+        return this.concatBuffers(addressBytes, this.strToBuffer(String(preLen)));
+    }
+
+    public static sha256(data: Uint8Array): Uint8Array {
+        // Calculate SHA-256 hash
+        // Replace with the actual SHA-256 implementation in your Vue project
+        // This example uses the `crypto-js` library
+        const dataArray = Array.from(data);
+        const hash = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(dataArray));
+        return this.hexToBuffer(hash.toString());
+    }
+
+    public static ripemd160(data: Uint8Array): Uint8Array {
+        // Calculate RIPEMD-160 hash
+        // Replace with the actual RIPEMD-160 implementation in your Vue project
+        // This example uses the `crypto-js` library
+        const dataArray = Array.from(data);
+        const hash = CryptoJS.RIPEMD160(CryptoJS.lib.WordArray.create(dataArray));
+        return this.hexToBuffer(hash.toString());
+    }
+
+    public static strToBuffer(str: string): Uint8Array {
+        return new Uint8Array(Array.from(str, (c) => c.charCodeAt(0)));
+    }
+
+    public static hexToBuffer(hex: string): Uint8Array {
+        const bytes = [];
+        for (let c = 0; c < hex.length; c += 2) {
+            bytes.push(parseInt(hex.substr(c, 2), 16));
+        }
+        return new Uint8Array(bytes);
+    }
+
+    public static concatBuffers(a: Uint8Array, b: Uint8Array): Uint8Array {
+        const result = new Uint8Array(a.length + b.length);
+        result.set(a, 0);
+        result.set(b, a.length);
+        return result;
+    }
+}
+
+
+
+
+
+/**
+ * 通过公钥生成地址
+ * @param pre 版本号（如比特币主网版本号“0x00"）
+ * @param pubKey 公钥
+ */
+
+// export function buildAddr(pre: string, pubKey: Uint8Array): Uint8Array {
+//     // 第一步，计算SHA-256哈希值
+//     //const publicSHA256 = ripemd160([pubKey]);
+//     const publicSHA256 = CryptoJS.SHA256(pubKey.toString());
+//     // 第二步，计算RIPEMD-160哈希值
+//     const RIPEMD160Hasher =  CryptoJS.RIPEMD160(publicSHA256);
+//     // RIPEMD160Hasher.update(publicSHA256);
+//     // const publicRIPEMD160 = RIPEMD160Hasher.digest();
+//
+//     // 第三步，在上一步结果之间加入地址版本号（如比特币主网版本号“0x00"）
+//     const a = '00'+RIPEMD160Hasher;
+//     let b = CryptoJS.SHA256(a);
+//     b = CryptoJS.SHA256(b);
+//     const c = b.toString().substring(0,8);
+//
+//     // const buf = new Uint8Array(pre.length + publicRIPEMD160.length + 4 + 1);
+//     // buf.set(pre.charCodeAt(0));
+//     // buf.set(publicRIPEMD160, 1);
+//
+//     // 第四步，计算上一步结果的SHA-256哈希值
+//     const temp = ripemd160(buf);
+//
+//     // 第五步，再次计算上一步结果的SHA-256哈希值
+//     const temp2 = ripemd160(temp);
+//
+//     // 第六步，取上一步结果的前4个字节（8位十六进制数）D61967F6，把这4个字节加在第三步结果的后面，作为校验
+//     buf.set(temp2.slice(0, 4), buf.length - 4);
+//     buf[buf.length - 1] = pre.length;
+//
+//     return buf;
+// }
+
+
+
+
+
+
+// function BuildAddr(pre: string, pubKey: Uint8Array): AddressCoin {
+//     // @ts-ignore
+//     const publicSHA256 = new Uint8Array([...pubKey].map((byte) => sha256(byte)));
+//     const RIPEMD160Hasher = new Uint8Array(ripemd160([...publicSHA256]));
+//
+//     const buf = new Uint8Array([...new TextEncoder().encode(pre), ...RIPEMD160Hasher]);
+//     const temp = new Uint8Array(sha256(sha256(buf)));
+//
+//     const preLen = new Uint8Array([buf.length]);
+//     return new Uint8Array([...buf, ...temp.slice(0, 4), ...preLen]);
+// }
+
+// function ParseAddrPrefix(addr: AddressCoin): string {
+//     if (addr.length <= 0) {
+//         return '';
+//     }
+//
+//     const lastByte = addr[addr.length - 1];
+//     const preLen = lastByte[0];
+//
+//     return String.fromCharCode(...addr.slice(0, preLen));
+// }
+//
+// function ValidAddr(pre: string, addr: AddressCoin): boolean {
+//     const ok = addr.slice(0, pre.length).every((byte, index) => byte === pre.charCodeAt(index));
+//
+//     if (!ok) {
+//         return false;
+//     }
+//
+//     const length = addr.length;
+//     // @ts-ignore
+//     const preLen = addr[length - 1][0];
+//     const preStr = String.fromCharCode(...addr.slice(0, preLen));
+//
+//     if (pre !== preStr) {
+//         return false;
+//     }
+//
+//     const temp = sha256(sha256(addr.slice(0, length - 4 - 1)));
+//     const okSuffix = addr.slice(0, length - 1).every((byte, index) => byte === temp[index]);
+//
+//     return okSuffix;
+// }
+//
+// function CheckPukAddr(pre: string, pubKey: Uint8Array, addr: AddressCoin): boolean {
+//     const tagAddr = BuildAddr(pre, pubKey);
+//     return tagAddr.every((byte, index) => byte === addr[index]);
+// }
+
+// function sha256(data: number): Uint8Array {
+//     // 实现 SHA-256 哈希算法的逻辑，返回 Uint8Array 结果
+//     // 请根据实际需要实现此函数
+//     return new Uint8Array();
+// }
+//
+function ripemd160(data: any[]): Uint8Array {
+    // 实现 RIPEMD-160 哈希算法的逻辑，返回 Uint8Array 结果
+    // 请根据实际需要实现此函数
+    return new Uint8Array();
+}

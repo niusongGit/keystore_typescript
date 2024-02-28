@@ -1,0 +1,58 @@
+import * as crypto from 'crypto';
+
+const Pbkdf2KeySize = 48;
+
+
+export class AesManager {
+    public static Pbkdf2Key(password: Buffer, salt: Buffer, iter: number): Buffer {
+        return crypto.pbkdf2Sync(password, salt, iter, Pbkdf2KeySize, 'sha256');
+    }
+
+    public static EncryptCBCPbkdf2Key(plantText: Buffer, pbkdf2Key: Buffer): [Buffer, Error | null] {
+        if (pbkdf2Key.length !== Pbkdf2KeySize) {
+            return [new Buffer(0),new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`)];
+        }
+        return this.EncryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16)); //加密
+    }
+
+    public static DecryptCBCPbkdf2Key(plantText: Buffer, pbkdf2Key: Buffer): [Buffer, Error | null] {
+        if (pbkdf2Key.length !== Pbkdf2KeySize) {
+            return [new Buffer(0),new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`)];
+        }
+        return this.DecryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16)); //加密
+    }
+
+    public static EncryptCBC(plantText: Buffer, key: Buffer, iv: Buffer): [Buffer, Error | null] {
+        if (iv.length !== 16) {
+            return [new Buffer(0), new Error(`VI length error(${iv.length}), aes cbc IV length should be 16`)];
+        }
+        const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+        const encrypted = Buffer.concat([cipher.update(this.PKCS7Padding(plantText, 16)), cipher.final()]);
+        return [encrypted,null];
+    }
+
+    public static DecryptCBC(ciphertext: Buffer, key: Buffer, iv: Buffer): [Buffer, Error | null] {
+        if (iv.length !== 16) {
+            return [new Buffer(0), new Error(`VI length error(${iv.length}), aes cbc IV length should be 16`)];
+        }
+        try {
+            const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+            const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+            return [this.PKCS7UnPadding(decrypted),null];
+        } catch (error) {
+            return [new Buffer(0),error as Error];
+        }
+    }
+
+    public static PKCS7Padding(plaintext: Buffer, blockSize: number): Buffer {
+        const padding = blockSize - (plaintext.length % blockSize);
+        const padBuffer = Buffer.alloc(padding, padding);
+        return Buffer.concat([plaintext, padBuffer]);
+    }
+
+    public static PKCS7UnPadding(plantText: Buffer): Buffer {
+        const padding = plantText[plantText.length - 1];
+        return plantText.slice(0, plantText.length - padding);
+    }
+
+}

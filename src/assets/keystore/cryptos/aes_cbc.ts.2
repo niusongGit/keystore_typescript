@@ -1,0 +1,47 @@
+import { AES, enc, lib,PBKDF2 } from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
+
+export class AesManager {
+    public static pbkdf2Key(password: number[], salt: number[], iter: number): number[] {
+        const passwordWordArray = lib.WordArray.create(password);
+        const saltWordArray = lib.WordArray.create(salt);
+        const derivedKey = PBKDF2(passwordWordArray, saltWordArray, {
+            keySize: 48, // 指定派生密钥的字节大小
+            iterations: iter, // 迭代次数
+        });
+        return Array.from(derivedKey.words);
+    }
+
+    public static encrypt(plainText: string, pbkdf2Key: number[]): string {
+        if (pbkdf2Key.length !== 48) {
+            throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be 48`);
+        }
+        const key = lib.WordArray.create(pbkdf2Key.slice(0, 32));
+        const iv = lib.WordArray.create(pbkdf2Key.slice(32));
+        const encrypted = AES.encrypt(plainText, key, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+        //return encrypted.ciphertext.toString();
+        return encrypted.toString();
+    }
+
+    public static decrypt(cipherText: string, pbkdf2Key: number[]): string {
+        if (pbkdf2Key.length !== 48) {
+            throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be 48`);
+        }
+        const key = lib.WordArray.create(pbkdf2Key.slice(0, 32));
+        const iv = lib.WordArray.create(pbkdf2Key.slice(32));
+        // const encryptedHexStr = CryptoJS.enc.Hex.parse(cipherText)
+        // const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr)
+        // console.log("srcs: ",srcs)
+        try {
+        const decrypted = AES.decrypt(cipherText, key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
+        });
+        console.log("decrypted: ",decrypted)
+        return decrypted.toString(enc.Utf8);
+        } catch (error) {
+            //console.error('发生异常:', error);
+            return ""
+        }
+    }
+}

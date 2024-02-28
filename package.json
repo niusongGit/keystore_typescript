@@ -8,13 +8,40 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "base58": "^2.0.1",
+    "bip32": "^4.0.0",
+    "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.5",
+    "browserify": "^17.0.0",
+    "bs58": "^5.0.0",
     "core-js": "^3.8.3",
+    "crypto": "^1.0.1",
+    "crypto-browserify": "^3.12.0",
+    "crypto-browserify-plus": "^3.13.0",
+    "crypto-js": "^4.2.0",
+    "ed25519-hd-key": "^1.3.0",
+    "elliptic": "^6.5.4",
+    "hdkey": "^2.1.0",
+    "node-stdlib-browser": "^1.2.0",
+    "ripemd160": "^2.0.2",
+    "stream-browserify": "^3.0.0",
+    "tiny-secp256k1": "^2.2.3",
+    "tweetnacl": "^1.0.3",
     "vue": "^3.2.13",
+    "vue-buffer": "^0.0.1",
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.3",
     "vuex": "^4.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.23.9",
+    "@types/bitcoinjs-lib": "^5.0.0",
+    "@types/crypto-js": "^4.2.1",
+    "@types/elliptic": "^6.4.18",
+    "@types/hdkey": "^2.0.3",
+    "@types/node": "^20.11.4",
+    "@types/ripemd160": "^2.0.3",
+    "@types/tiny-secp256k1": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.0",
@@ -24,10 +51,16 @@
     "@vue/cli-plugin-vuex": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
     "@vue/eslint-config-typescript": "^9.1.0",
+    "buffer": "^6.0.3",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
     "sass": "^1.32.7",
     "sass-loader": "^12.0.0",
-    "typescript": "~4.5.5"
+    "typescript": "~4.5.5",
+    "vite-plugin-node-stdlib-browser": "^0.2.1",
+    "wasm-loader": "^1.3.0"
+  },
+  "browser": {
+    "crypto": false
   }
 }

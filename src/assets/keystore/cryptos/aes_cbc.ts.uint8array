@@ -1,0 +1,55 @@
+import * as crypto from 'crypto';
+const Pbkdf2KeySize = 48;
+
+export function Pbkdf2Key(password: Uint8Array, salt: Uint8Array, iter: number): Uint8Array {
+    const derivedKey = crypto.pbkdf2Sync(Buffer.from(password), Buffer.from(salt), iter, Pbkdf2KeySize, 'sha256');
+    return new Uint8Array(derivedKey);
+}
+
+export function EncryptCBCPbkdf2Key(plantText: Uint8Array, pbkdf2Key: Uint8Array): Uint8Array {
+    if (pbkdf2Key.length !== Pbkdf2KeySize) {
+        throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+    }
+    return new Uint8Array(EncryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16)));
+}
+
+export function DecryptCBCPbkdf2Key(plantText: Uint8Array, pbkdf2Key: Uint8Array): Uint8Array {
+    if (pbkdf2Key.length !== Pbkdf2KeySize) {
+        throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+    }
+    return new Uint8Array(DecryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16)));
+}
+
+function EncryptCBC(plantText: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+    if (iv.length !== 16) {
+        throw new Error(`VI length error(${iv.length}), aes cbc IV length should be 16`);
+    }
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), Buffer.from(iv));
+    const encrypted = Buffer.concat([cipher.update(PKCS7Padding(plantText, 16)), cipher.final()]);
+    return new Uint8Array(encrypted);
+}
+
+function DecryptCBC(ciphertext: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+    if (iv.length !== 16) {
+        throw new Error(`VI length error(${iv.length}), aes cbc IV length should be 16`);
+    }
+    try {
+        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), Buffer.from(iv));
+        const decrypted = Buffer.concat([decipher.update(Buffer.from(ciphertext)), decipher.final()]);
+        return new Uint8Array(PKCS7UnPadding(decrypted));
+    } catch (error) {
+        console.error('发生异常:', error);
+        return new Uint8Array(0);
+    }
+}
+
+function PKCS7Padding(plaintext: Uint8Array, blockSize: number): Uint8Array {
+    const padding = blockSize - (plaintext.length % blockSize);
+    const padBuffer = new Uint8Array(padding).map(() => padding);
+    return new Uint8Array([...plaintext, ...padBuffer]);
+}
+
+function PKCS7UnPadding(plantText: Uint8Array): Uint8Array {
+    const padding = plantText[plantText.length - 1];
+    return plantText.slice(0, plantText.length - padding);
+}

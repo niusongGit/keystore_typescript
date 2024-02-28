@@ -1,0 +1,43 @@
+import { AddressFromB58String, B58String, AddressCoin } from './cryptos/address';
+
+// 地址信息
+export class AddressInfo {
+    index: number;
+    nickname: string;
+    addr: AddressCoin;
+    private puk: Uint8Array;
+    cPuk: Uint8Array;
+    private subKey: Uint8Array;
+    addrStr: string;
+    private pukStr: string;
+    checkHash: Uint8Array;
+
+    constructor(source: any = {}) {
+        if ('string' === typeof source) source = JSON.parse(source)
+        this.nickname = source["nickname"]
+        this.index = source["index"]
+        this.addr = source["addr"]
+        this.puk = source["puk"]
+        this.cPuk = source["cPuk"]
+        this.subKey = source["subKey"]
+        this.addrStr = source["addrStr"]
+        this.pukStr = source["pukStr"]
+        this.checkHash = source["checkHash"]
+    }
+
+    getAddressStr(): string {
+        if (!this.addrStr) {
+            this.addrStr = B58String(this.addr);
+        }
+        return this.addrStr;
+    }
+
+    getPublicKeyStr(): string {
+        if (!this.pukStr || !this.puk) {
+            this.pukStr = this.puk.reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '');
+        }
+        return this.pukStr;
+    }
+
+    // 其他方法和属性需要根据实际代码进行转换
+}

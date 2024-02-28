@@ -1,0 +1,201 @@
+//import * as crypto from "crypto";
+// import {AES, enc, mode, pad} from 'crypto-js'
+// import * as CryptoJS from 'crypto-js';
+//
+// const Pbkdf2KeySize = 48;
+//
+// export function Pbkdf2Key(password:  CryptoJS.lib.WordArray, salt:  CryptoJS.lib.WordArray, iter: number): CryptoJS.lib.WordArray {
+//     return CryptoJS.PBKDF2(password, salt, {
+//         keySize: Pbkdf2KeySize, // 指定派生密钥的字节大小
+//         iterations: iter // 迭代次数
+//     });
+//    // const derivedKey = crypto.pbkdf2Sync(Buffer.from(password), Buffer.from(salt), iter, Pbkdf2KeySize, 'sha256');
+//     //return derivedKey;
+// }
+//
+// export function EncryptCBCPbkdf2Key(plantText: Uint8Array, pbkdf2Key: Uint8Array): Uint8Array {
+//     if (pbkdf2Key.length !== Pbkdf2KeySize) {
+//         throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+//     }
+//     return EncryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16));
+// }
+//
+// export function DecryptCBCPbkdf2Key(plantText: Uint8Array, pbkdf2Key: Uint8Array): Uint8Array {
+//     if (pbkdf2Key.length !== Pbkdf2KeySize) {
+//         throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+//     }
+//     return DecryptCBC(plantText, pbkdf2Key.slice(0, Pbkdf2KeySize - 16), pbkdf2Key.slice(Pbkdf2KeySize - 16));
+// }
+//
+// //
+// // function EncryptCBC(plantText: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+// //     if (iv.length !== 16) {
+// //         throw new Error(`IV length error(${iv.length}), aes cbc IV length should be 16`);
+// //     }
+// //     const keyHex = enc.Hex.parse(bytesToHex(key));
+// //     const ivHex = enc.Hex.parse(bytesToHex(iv));
+// //     const plantTextHex = enc.Hex.parse(bytesToHex(plantText));
+// //     const encrypted = AES.encrypt(plantTextHex, keyHex, { iv: ivHex, mode: mode.CBC, padding: pad.Pkcs7 });
+// //     const ciphertext = enc.Hex.parse(encrypted.ciphertext.toString());
+// //     //console.log("ciphertext:", Uint8Array.from(encrypted.ciphertext.words))
+// //     return wordArrayToUint8Array(ciphertext);
+// // }
+// //
+// //
+// // function DecryptCBC(ciphertext: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+// //     if (iv.length !== 16) {
+// //         throw new Error(`IV length error(${iv.length}), aes cbc IV length should be 16`);
+// //     }
+// //     const keyHex = enc.Hex.parse(bytesToHex(key));
+// //     const ivHex = enc.Hex.parse(bytesToHex(iv));
+// //     const ciphertextHex = enc.Hex.parse(bytesToHex(ciphertext));
+// //     const decrypted = AES.decrypt(ciphertextHex.toString(), keyHex, { iv: ivHex, mode: mode.CBC, padding: pad.Pkcs7 });
+// //     const plantText = enc.Hex.parse(decrypted.toString());
+// //     return wordArrayToUint8Array(plantText);
+// // }
+//
+//
+// export function wordArrayToUint8Array(wordArray: CryptoJS.lib.WordArray): Uint8Array {
+//     const hexStr = enc.Hex.stringify(wordArray);
+//     const uint8Array = Uint8Array.from(hexStr, (c) => parseInt(c, 16));
+//     return uint8Array;
+// }
+// // export function bytesToHex(bytes: Uint8Array): string {
+// //     return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+// // }
+// export function EncryptCBC(plantText: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+//     if (iv.length !== 16) {
+//         throw new Error(`IV length error(${iv.length}), aes cbc IV length should be 16`);
+//     }
+//     const keyHex = enc.Hex.parse(bytesToHex(key));
+//     const ivHex = enc.Hex.parse(bytesToHex(iv));
+//     const plantTextHex = enc.Hex.parse(bytesToHex(plantText));
+//     const encrypted = AES.encrypt(plantTextHex, keyHex, { iv: ivHex, mode: mode.CBC, padding: pad.Pkcs7 });
+//     const ciphertextHex = encrypted.ciphertext.toString();
+//     //const ciphertextHex = encrypted.toString();
+//     const ciphertext = hexToUint8Array(ciphertextHex);
+//     return ciphertext;
+// }
+//
+// export function DecryptCBC(ciphertext: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
+//     if (iv.length !== 16) {
+//         throw new Error(`IV length error(${iv.length}), aes cbc IV length should be 16`);
+//     }
+//     const keyHex = enc.Hex.parse(bytesToHex(key));
+//     const ivHex = enc.Hex.parse(bytesToHex(iv));
+//     const ciphertextHex = enc.Hex.parse(bytesToHex(ciphertext))
+//     const decrypted = AES.decrypt(CryptoJS.enc.Base64.stringify(ciphertextHex), keyHex, { iv: ivHex, mode: mode.CBC, padding: pad.Pkcs7 });
+//     const plantTextHex = decrypted.toString();
+//     const plantText = hexToUint8Array(plantTextHex);
+//     return plantText;
+// }
+//
+// export function bytesToHex(bytes: Uint8Array): string {
+//     return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+// }
+//
+// export function hexToUint8Array(hex: string): Uint8Array {
+//     const length = hex.length / 2;
+//     const uint8Array = new Uint8Array(length);
+//     for (let i = 0; i < length; i++) {
+//         const byte = parseInt(hex.substr(i * 2, 2), 16);
+//         uint8Array[i] = byte;
+//     }
+//     return uint8Array;
+// }
+
+import { AES, enc, lib,PBKDF2 } from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
+
+export class AesManager {
+    public static pbkdf2Key(password: number[], salt: number[], iter: number): number[] {
+        const passwordWordArray = lib.WordArray.create(password);
+        const saltWordArray = lib.WordArray.create(salt);
+        const derivedKey = PBKDF2(passwordWordArray, saltWordArray, {
+            keySize: 48, // 指定派生密钥的字节大小
+            iterations: iter, // 迭代次数
+        });
+        return Array.from(derivedKey.words);
+    }
+
+    public static encrypt(plainText: string, pbkdf2Key: number[]): string {
+        if (pbkdf2Key.length !== 48) {
+            throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be 48`);
+        }
+        const key = lib.WordArray.create(pbkdf2Key.slice(0, 32));
+        const iv = lib.WordArray.create(pbkdf2Key.slice(32));
+        const encrypted = AES.encrypt(plainText, key, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+        //return encrypted.ciphertext.toString();
+        return encrypted.toString();
+    }
+
+    public static decrypt(cipherText: string, pbkdf2Key: number[]): string {
+        if (pbkdf2Key.length !== 48) {
+            throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be 48`);
+        }
+        const key = lib.WordArray.create(pbkdf2Key.slice(0, 32));
+        const iv = lib.WordArray.create(pbkdf2Key.slice(32));
+        // const encryptedHexStr = CryptoJS.enc.Hex.parse(cipherText)
+        // const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr)
+        // console.log("srcs: ",srcs)
+        try {
+        const decrypted = AES.decrypt(cipherText, key, {
+            iv: iv,
+            mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
+        });
+        console.log("decrypted: ",decrypted)
+        return decrypted.toString(enc.Utf8);
+        } catch (error) {
+            //console.error('发生异常:', error);
+            return ""
+        }
+    }
+}
+
+//
+// export class AesManager {
+//     public static  pbkdf2Key(password:  CryptoJS.lib.WordArray, salt:  CryptoJS.lib.WordArray, iter: number): number[] {
+//         return CryptoJS.PBKDF2(password, salt, {
+//             keySize: Pbkdf2KeySize, // 指定派生密钥的字节大小
+//             iterations: iter // 迭代次数
+//         }).words;
+//         // const derivedKey = crypto.pbkdf2Sync(Buffer.from(password), Buffer.from(salt), iter, Pbkdf2KeySize, 'sha256');
+//         //return derivedKey;
+//     }
+//
+//     //加密
+//     /*
+//     * {param} plaintText 加密明文
+//     * return  str 加密结果
+//     */
+//     public static encrypt(plantText: string, pbkdf2Key: number[]): string {
+//         if (pbkdf2Key.length !== Pbkdf2KeySize) {
+//             throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+//         }
+//         const srcs = CryptoJS.enc.Utf8.parse(plantText)
+//         const key = pbkdf2Key.slice(0, Pbkdf2KeySize - 16).toString()
+//         const iv = pbkdf2Key.slice(Pbkdf2KeySize - 16).toString()
+//
+//         const encrypted = CryptoJS.AES.encrypt(srcs, CryptoJS.enc.Utf8.parse(key), { iv: CryptoJS.enc.Utf8.parse(iv), mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 })
+//         return encrypted.ciphertext.toString().toUpperCase()
+//     }
+//     //解密
+//     /*
+//     * {param} plaintText 解密密文
+//
+//     * return  str 解密结果
+// */
+//     public static decrypt(plantText: string, pbkdf2Key: number[]): string {
+//         if (pbkdf2Key.length !== Pbkdf2KeySize) {
+//             throw new Error(`Crypted Key length error(${pbkdf2Key.length}), Crypted Key length should be ${Pbkdf2KeySize}`);
+//         }
+//         const encryptedHexStr = CryptoJS.enc.Hex.parse(plantText)
+//         const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr)
+//         const key = pbkdf2Key.slice(0, Pbkdf2KeySize - 16).toString()
+//         const iv = pbkdf2Key.slice(Pbkdf2KeySize - 16).toString()
+//         const decrypt = CryptoJS.AES.decrypt(srcs, CryptoJS.enc.Utf8.parse(key), { iv: CryptoJS.enc.Utf8.parse(iv), mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 })
+//         console.log("decrypt :",decrypt)
+//         const decryptedStr = decrypt.toString(CryptoJS.enc.Utf8)
+//         return decryptedStr.toString()
+//     }
+// }

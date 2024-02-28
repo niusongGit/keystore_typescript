@@ -1,0 +1,41 @@
+//import HDKey from 'hdkey';
+import { Buffer } from "buffer";
+window.Buffer = Buffer;
+import {Address,B58String} from '@/assets/keystore/cryptos/address';
+//import * as bitcoin from 'bitcoinjs-lib';
+
+//import {bip32 } from 'bitcoinjs-lib';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
+const bip32 = BIP32Factory(ecc);
+export function deriveAddressFromPath(seed: Buffer, path: string): string {
+    console.log("seed :",seed)
+    const root = bip32.fromSeed(seed);
+    const derivedKey = root.derivePath(path);
+    console.log("derivedKey:",derivedKey)
+    // const hdkey = HDKey.fromMasterSeed(seed);
+    // const derivedKey = hdkey.derive(path);
+
+    // 从种子创建一个 bitcoinjs-lib 的 BIP32 HD 密钥
+    //const root = bitcoin.fromSeedBuffer(seed);
+   // const root = bitcoin.bip32.fromSeed(seed)
+
+// 使用指定的路径派生密钥
+  //  const derivedKey = root.derivePath(path);
+
+// 从派生密钥获取公钥
+    //const publicKey = derivedKey.publicKey;
+
+
+    const seedUint8Array = new Uint8Array(derivedKey.publicKey);
+    const addrUint8Array = Address.buildAddress("iCom",seedUint8Array)
+     return B58String(addrUint8Array)
+}
+
+// const seed = Buffer.from('your seed phrase', 'hex');
+// const path = "m/44'/98055361'/0'/0/0";
+//
+// const { ethereumAddress, bitcoinAddress } = deriveAddressFromPath(seed, path);
+//
+// console.log('Ethereum Address:', ethereumAddress);
+// console.log('Bitcoin Address:', bitcoinAddress);

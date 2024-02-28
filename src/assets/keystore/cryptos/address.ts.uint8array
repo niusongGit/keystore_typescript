@@ -1,0 +1,85 @@
+import * as crypto from 'crypto';
+import * as bs58 from 'bs58';
+
+export type AddressCoin = Uint8Array;
+
+export function B58String(addr: AddressCoin): string {
+    if (addr.length <= 0) {
+        return "";
+    }
+    const lastByte = addr.slice(-1);
+    const lastStr = bs58.encode(Buffer.from(lastByte));
+    if (lastStr === "") {
+        return "";
+    }
+    const preLen = addr[addr.length - 1];
+    const preStr = Buffer.from(addr.slice(0, preLen)).toString();
+    const centerStr = bs58.encode(addr.slice(preLen, -1));
+    return preStr + centerStr + lastStr;
+}
+
+export function AddressFromB58String(str: string): AddressCoin | null {
+    if (str === "") {
+        return null;
+    }
+    const lastStr = str.slice(-1);
+    const lastByte = bs58.decode(lastStr);
+    if (lastByte.length <= 0) {
+        return null;
+    }
+    const preLen = lastByte[0];
+    if (preLen > str.length) {
+        return null;
+    }
+    const preStr = str.slice(0, preLen);
+    const centerByte = bs58.decode(str.slice(preLen, -1));
+    const bs = new Uint8Array([...Buffer.from(preStr), ...centerByte, ...lastByte]);
+    return bs;
+}
+
+export function BuildAddr(pre: string, pubKey: Uint8Array): AddressCoin {
+    const publicSHA256 = crypto.createHash('sha256').update(Buffer.from(pubKey)).digest();
+    const RIPEMD160Hasher = crypto.createHash('ripemd160');
+    RIPEMD160Hasher.update(publicSHA256);
+    const publicRIPEMD160 = RIPEMD160Hasher.digest();
+    const buf = new Uint8Array([...Buffer.from(pre), ...publicRIPEMD160]);
+    let temp = crypto.createHash('sha256').update(Buffer.from(buf)).digest();
+    temp = crypto.createHash('sha256').update(Buffer.from(temp)).digest();
+    const checksum = temp.slice(0, 4);
+    const preLen = Buffer.from(pre).length;
+    return new Uint8Array([...Buffer.from(pre), ...publicRIPEMD160, ...checksum, ...Buffer.from([preLen])]);
+}
+
+export function ParseAddrPrefix(addr: AddressCoin): string {
+    if (addr.length <= 0) {
+        return "";
+    }
+    const lastByte = addr.slice(-1);
+    const preLen = lastByte[0];
+    const preStr = Buffer.from(addr.slice(0, preLen)).toString();
+    return preStr;
+}
+
+export function ValidAddr(pre: string, addr: AddressCoin): boolean {
+    const ok = Buffer.compare(addr.slice(0, pre.length), Buffer.from(pre)) === 0;
+    if (!ok) {
+        return false;
+    }
+    const length = addr.length;
+    const preLen = addr[length - 1];
+    if (preLen > length) {
+        return false;
+    }
+   // const temp = crypto.createHash('sha256').update(Buffer.from(addr.slice(0, length - 5)).buffer).digest();
+    const temp = crypto.createHash('sha256').update(Buffer.from(addr.slice(0, length - 5))).digest();
+    const checksum = temp.slice(0, 4);
+    if (!Buffer.compare(addr.slice(0, -5), checksum)) {
+        return false;
+    }
+    return true;
+}
+
+export function CheckPukAddr(pre: string, pubKey: Uint8Array, addr: AddressCoin): boolean {
+    const tagAddr = BuildAddr(pre, pubKey);
+    return Buffer.compare(tagAddr, addr) === 0;
+}
