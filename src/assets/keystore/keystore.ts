@@ -36,6 +36,10 @@ class Keystore {
         this.Version = 0;
     }
 
+    /**
+     * 加载本地keystore
+     * @returns {Error | null} 为null时表示执行成功
+     */
     public Load(): Error | null {
         // Implement the logic to load the keystore from the file
         const keystoreString = localStorage.getItem(this.saveKeyName);
@@ -98,6 +102,11 @@ class Keystore {
         localStorage.setItem(this.saveKeyName, keystoreString);
     }
 
+    /**
+     * 创建keystore
+     * @param {string} password - 密码
+     * @returns {Error | null} 为null时表示执行成功
+     */
     public CreateNewKeystore(password: string): Error | null {
         const pwd = crypto.createHash('sha256').update(password).digest();
         const seed = randomBytes(16);
@@ -134,6 +143,13 @@ class Keystore {
         return null
     }
 
+    /**
+     * 创建钱包地址
+     * @param {string} walletPassword - 密码
+     * @param {string} nickname - 名称（可以为空）
+     * @returns {Buffer}  地址Buffer格式
+     * @returns {Error | null} 为null时表示执行成功
+     */
     GetNewAddr(walletPassword :string,nickname :string) :[AddressCoin, Error | null]{
         const walletPasswordHash = crypto.createHash("sha256").update(walletPassword).digest();
        // const newAddrPasswordHash = crypto.createHash("sha256").update(newAddrPassword).digest();
@@ -189,6 +205,12 @@ class Keystore {
         return [addr,null]
     }
 
+    /**
+     * 验证密码
+     * @param {Buffer} pwd - 密码
+     * @returns {boolean} 密码是否正确
+     * @returns {Buffer}  pbkdf2Key
+     */
     Decrypt (pwd :Buffer) :[boolean,Buffer]{
         const pbkdf2Key = AesManager.Pbkdf2Key(pwd, this.Salt, this.Rounds);
         const seed = AesManager.DecryptCBCPbkdf2Key(this.Seed,pbkdf2Key)
@@ -227,6 +249,11 @@ class Keystore {
 
     }
 
+    /**
+     * 获取地址信息
+     * @param {string} addr - 地址
+     * @returns {AddressInfo | null} 地址信息
+     */
     FindAddress(addr: string): AddressInfo | null {
         const v = this.addrMap.get(addr);
         if (!v) {
@@ -236,10 +263,19 @@ class Keystore {
 
     }
 
+    /**
+     * 获取全部地址信息
+     * @returns {AddressInfo[]}  全部地址信息
+     */
     GetAddrAll():AddressInfo[]{
         return this.Addrs
     }
 
+    /**
+     * 设置默认地址
+     * @param {number} index - 地址数组索
+     * @returns {boolean} 是否成功
+     */
     setCoinbase(index: number): boolean {
         if (index < this.Addrs.length) {
             this.Coinbase = index;
@@ -248,6 +284,10 @@ class Keystore {
         return false;
     }
 
+    /**
+     * 获取默认地址信息
+     * @returns {AddressInfo | null} 默认地址信息
+     */
     getCoinbase(): AddressInfo | null {
         if (this.Coinbase < this.Addrs.length) {
             return this.Addrs[this.Coinbase];
@@ -255,6 +295,14 @@ class Keystore {
         return null;
     }
 
+    /**
+     * 根据地址获取对应的秘钥
+     * @param {string} addr - 地址
+     * @param {string} password - 密码
+     * @returns {Buffer} 私钥
+     * @returns {Buffer}  公钥
+     * @returns {Error | null} 为null时表示执行成功
+     */
     GetKeyByAddr(addr: string, password: string): [prk: Buffer, puk: Buffer, err: Error | null] {
         const pwd = crypto.createHash('sha256').update(password).digest();
         const [ok,walletPbkdf2Key] = this.Decrypt(pwd)
@@ -280,6 +328,13 @@ class Keystore {
         return [ prk, puk, null];
     }
 
+    /**
+     * 修改地址名称
+     * @param {string} nickname - 名字（可以为空）
+     * @param {string} password - 密码
+     * @param {string} addr - 地址
+     * @returns {Error | null} 为null时表示执行成功
+     */
     UpdateAddrName(nickname : string, password: string, addr: string) :Error | null {
         const pwd = crypto.createHash('sha256').update(password).digest();
         const [ok,walletPbkdf2Key] = this.Decrypt(pwd)
@@ -314,6 +369,13 @@ class Keystore {
         return null
     }
 
+    /**
+     * 修改密码
+     * @param {string} oldpwd - 旧密码
+     * @param {string} newpwd - 新密码
+     * @returns {boolean}  是否修改成功
+     * @returns {Error | null} 为null时表示执行成功
+     */
     UpdatePwd(oldpwd: string, newpwd: string):[boolean, Error | null] {
         const oldHash = crypto.createHash('sha256').update(oldpwd).digest();
         const newHash = crypto.createHash('sha256').update(newpwd).digest();
@@ -376,6 +438,12 @@ class Keystore {
 
     }
 
+    /**
+     * 助记词导出
+     * @param {string} pwd - 密码
+     * @returns {string}  全部地址信息
+     * @returns {Error | null} 助记词
+     */
     ExportMnemonic(pwd: string): [string,  Error | null] {
         const pwdHash = crypto.createHash('sha256').update(pwd).digest();
         const pbkdf2Key = AesManager.Pbkdf2Key(pwdHash, this.Salt, this.Rounds);
@@ -396,6 +464,12 @@ class Keystore {
         return [words, null];
     }
 
+    /**
+     * 助记词导入
+     * @param {string} words - 助记词
+     * @param {string} pwd - 密码
+     * @returns {Error | null} 为null时表示执行成功
+     */
     ImportMnemonic(words: string, pwd: string):  Error | null {
         bip39.setDefaultWordlist("english")
         const seedBs = bip39.mnemonicToEntropy(words);
@@ -411,12 +485,26 @@ class Keystore {
         return null;
     }
 
+    /**
+     * 签名
+     * @param {Uint8Array} message - 签名原始数据
+     * @param {Buffer} prk - 私钥
+     * @returns {Uint8Array | null} 签名结果，为null表示失败
+     */
     public static Sign(message :Uint8Array,prk :Buffer):Uint8Array|null{
         if (prk.length === 0){
             return null
         }
         return  tweetnacl.sign.detached(message, new Uint8Array(prk));
     }
+
+    /**
+     * 签名验证
+     * @param {Uint8Array} message - 签名原始数据
+     * @param {Uint8Array} signature - 签名结果
+     * @param {Buffer} puk - 公钥
+     * @returns {boolean}  验证结果
+     */
     public static SignVerify(message :Uint8Array,signature:Uint8Array,puk :Buffer):boolean{
         if (puk.length === 0 || signature.length === 0){
             return false
