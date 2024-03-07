@@ -1,0 +1,12 @@
+//protoc --js_out=import_style=commonjs,binary:../generated --ts_out=../generated *.proto
+syntax = "proto3";
+
+//package go_protos;
+
+//option go_package="./go_protos";
+
+import "txbase.proto";
+// message definition
+message TxPay {
+  TxBase TxBase =1;
+}

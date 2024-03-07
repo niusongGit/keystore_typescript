@@ -1,16 +1,53 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-      <button @click="testNewKeystore">点击按钮</button>
+      <button @click="testOfflineTx">点击按钮</button>
 <!--    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>-->
   </div>
 </template>
 <script lang="ts" setup>
 import { Options, Vue } from 'vue-class-component';
 import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
-//import { AddressFromB58String,B58String, AddressCoin } from '@/assets/keystore/cryptos/address';
+import { AddressFromB58String,B58String, AddressCoin } from '@/assets/keystore/cryptos/address';
 //import {AddressInfo} from "@/assets/keystore/wallet";
 import Keystore from "@/assets/keystore/keystore"
+import {CreateOfflineTx} from "@/assets/tx_offline/tx_offline"
+
+
+
+function testOfflineTx(){
+    //buildOfflineTx()
+
+    const pwd = "1234567890"
+    let key = new Keystore("keystore","iCom")
+
+    const ImportMnemonicerr = key.ImportMnemonic("hour street again define million camera clean violin tunnel cattle flee daughter",pwd)
+    if (ImportMnemonicerr instanceof Error) {
+        console.error("ImportMnemonicerr", ImportMnemonicerr.message)
+    }
+
+    const [addB,err1] = key.GetNewAddr(pwd,"张三")
+        if (err1 instanceof Error) {
+            console.error("errr1", err1.message)
+        }
+        console.log("GetNewAddr:",addB)
+
+    const addrinfo = key.getCoinbase()
+    if (addrinfo === null){
+        console.error("默认地址为空")
+        return
+    }
+
+
+
+    const tx = CreateOfflineTx(key,pwd ,addrinfo.addrStr,B58String(addB),"comment",10,2,30,119,20,"domain",1)
+
+    if (tx instanceof Error) {
+        console.error("errrtx", tx)
+    }
+    console.log("CreateOfflineTx:",tx)
+    return
+}
 
 //
 // function testAddress(){
@@ -34,29 +71,32 @@ import Keystore from "@/assets/keystore/keystore"
     const newpwd = "9876543210"
         let key = new Keystore("keystore","iCom")
 
-       //  key.ImportMnemonic("hour street again define million camera clean violin tunnel cattle flee daughter","12345678901")
+        const ImportMnemonicerr = key.ImportMnemonic("picture person motion target burst steak crawl bench among either smile win",pwd)
+         if (ImportMnemonicerr instanceof Error) {
+             console.error("ImportMnemonicerr", ImportMnemonicerr.message)
+         }
        // const [words,err] =  key.ExportMnemonic("12345678901")
        //  console.log(words)
        //  if (err instanceof Error) {
        //      console.error("errr", err.message)
        //  }
 
-        const er = key.Load()
-        if (er instanceof Error) {
-            console.log("load:", er.message);
-
-            const err = key.CreateNewKeystore(pwd)
-            if (err instanceof Error) {
-                console.error("errr", err.message)
-            }
-
-            const [addB,err1] = key.GetNewAddr(pwd,"张三")
-            if (err1 instanceof Error) {
-                console.error("errr1", err1.message)
-            }
-            console.log("GetNewAddr:",addB)
-
-        }
+        // const er = key.Load()
+        // if (er instanceof Error) {
+        //     console.log("load:", er.message);
+        //
+        //     const err = key.CreateNewKeystore(pwd)
+        //     if (err instanceof Error) {
+        //         console.error("errr", err.message)
+        //     }
+        //
+        //     const [addB,err1] = key.GetNewAddr(pwd,"张三")
+        //     if (err1 instanceof Error) {
+        //         console.error("errr1", err1.message)
+        //     }
+        //     console.log("GetNewAddr:",addB)
+        //
+        // }
 
 
 
@@ -95,25 +135,25 @@ import Keystore from "@/assets/keystore/keystore"
         let ok = keystore.SignVerify(message,signature,puk)
         console.log("验证签名结果：",ok)
 
-        message = new Uint8Array([1, 2, 3, 4, 5,6]);
-        ok = keystore.SignVerify(message,signature,puk)
-        console.log("验证签名结果：",ok)
+        // message = new Uint8Array([1, 2, 3, 4, 5,6]);
+        // ok = keystore.SignVerify(message,signature,puk)
+        // console.log("验证签名结果：",ok)
 
 
-        const [ok1,uperr] = key.UpdatePwd(pwd,newpwd)
-        if (uperr instanceof Error) {
-            console.error("keyerr", uperr.message)
-            return
-        }
-        console.log("修改密码是否成功",ok1)
-        let UpdateAddrNameok = key.UpdateAddrName("五五",pwd,addrinfo.addrStr)
-        console.log("修改名字是否成功",UpdateAddrNameok)
-        UpdateAddrNameok = key.UpdateAddrName("李四",newpwd,addrinfo.addrStr)
-        console.log("修改名字是否成功",UpdateAddrNameok)
-
-        key.GetAddrAll().forEach((element, index) => {
-            console.log("index:",index," value:",element)
-        });
+        // const [ok1,uperr] = key.UpdatePwd(pwd,newpwd)
+        // if (uperr instanceof Error) {
+        //     console.error("keyerr", uperr.message)
+        //     return
+        // }
+        // console.log("修改密码是否成功",ok1)
+        // let UpdateAddrNameok = key.UpdateAddrName("五五",pwd,addrinfo.addrStr)
+        // console.log("修改名字是否成功",UpdateAddrNameok)
+        // UpdateAddrNameok = key.UpdateAddrName("李四",newpwd,addrinfo.addrStr)
+        // console.log("修改名字是否成功",UpdateAddrNameok)
+        //
+        // key.GetAddrAll().forEach((element, index) => {
+        //     console.log("index:",index," value:",element)
+        // });
         console.log("keystore :",key)
         // key.CreateNewKeystore("1234567890")
         // key.GetNewAddr("1234567890","1234567890")
