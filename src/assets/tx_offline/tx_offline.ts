@@ -37,7 +37,7 @@ export function CreateOfflineTx(keyStoreObj :Keystore,pwd :string,srcaddress :st
 
     const vin = new Vin({
         Puk: new Uint8Array(puk),
-        sign: new Uint8Array([4, 5, 6]),
+        sign: new Uint8Array(0),
         Nonce: nonceInt
     });
 
@@ -145,26 +145,54 @@ export class TxBase {
             voutBss.push(voutBsone);
             voutBssLenght += voutBsone.length;
         }
-        let bs: Uint8Array;
-        if (voutBs === null) {
-            bs = new Uint8Array(8 + 8 + 8 + 8 + voutBssLenght + 8 + (this.Payload ? this.Payload.length : 0) + 8);
-        } else {
-            bs = new Uint8Array((voutBs.length || 0) + 8 + 8 + 8 + 8 + voutBssLenght + 8 + (this.Payload ? this.Payload.length : 0) + 8);
-            bs.set(voutBs);
+        let bs = new Uint8Array();
+        if (voutBs !== null) {
+            bs = new Uint8Array([...bs, ...voutBs]);
         }
-        bs.set(uint64ToBytes(this.Type || 0), bs.length - 8 - 8 - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
-        bs.set(uint64ToBytes(this.Vin_total || 0), bs.length - 8 - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
-        bs.set(uint64ToBytes(vinIndex), bs.length - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
-        bs.set(uint64ToBytes(this.Vout_total || 0), bs.length - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(this.Type || 0)]);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(this.Vin_total || 0)]);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(vinIndex)]);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(this.Vout_total || 0)]);
         for (const one of voutBss) {
-            bs.set(one, bs.length - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+            bs = new Uint8Array([...bs, ...one]);
         }
-        bs.set(uint64ToBytes(this.Gas || 0), bs.length - 8 - (this.Payload ? this.Payload.length : 0) - 8);
-        bs.set(uint64ToBytes(this.LockHeight || 0), bs.length - (this.Payload ? this.Payload.length : 0) - 8);
-        bs.set(this.Payload || new Uint8Array(0), 0);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(this.Gas || 0)]);
+        bs = new Uint8Array([...bs, ...uint64ToBytes(this.LockHeight || 0)]);
+        bs = new Uint8Array([...bs, ...(this.Payload || new Uint8Array(0))]);
         return bs;
     }
-    
+
+    // getSignserialize(voutBs: Uint8Array|null, vinIndex: number): Uint8Array | null {
+    //     if (vinIndex > (this.Vin ? this.Vin.length : 0)) {
+    //         return null;
+    //     }
+    //     let voutBssLenght = 0;
+    //     const voutBss: Uint8Array[] = [];
+    //     for (const one of this.Vout || []) {
+    //         const voutBsone = one.serialize();
+    //         voutBss.push(voutBsone);
+    //         voutBssLenght += voutBsone.length;
+    //     }
+    //     let bs: Uint8Array;
+    //     if (voutBs === null) {
+    //         bs = new Uint8Array(8 + 8 + 8 + 8 + voutBssLenght + 8 + (this.Payload ? this.Payload.length : 0) + 8);
+    //     } else {
+    //         bs = new Uint8Array((voutBs.length || 0) + 8 + 8 + 8 + 8 + voutBssLenght + 8 + (this.Payload ? this.Payload.length : 0) + 8);
+    //         bs.set(voutBs);
+    //     }
+    //     bs.set(uint64ToBytes(this.Type || 0), bs.length - 8 - 8 - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     bs.set(uint64ToBytes(this.Vin_total || 0), bs.length - 8 - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     bs.set(uint64ToBytes(vinIndex), bs.length - 8 - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     bs.set(uint64ToBytes(this.Vout_total || 0), bs.length - 8 - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     for (const one of voutBss) {
+    //         bs.set(one, bs.length - voutBssLenght - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     }
+    //     bs.set(uint64ToBytes(this.Gas || 0), bs.length - 8 - (this.Payload ? this.Payload.length : 0) - 8);
+    //     bs.set(uint64ToBytes(this.LockHeight || 0), bs.length - (this.Payload ? this.Payload.length : 0) - 8);
+    //     bs.set(this.Payload || new Uint8Array(0), 0);
+    //     return bs;
+    // }
+
     Proto():Uint8Array{
        const TxBaseP = new TxBaseProto();
 
