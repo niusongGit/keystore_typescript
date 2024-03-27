@@ -1526,6 +1526,13 @@
   dependencies:
     tiny-secp256k1 "*"
 
+"@types/varint@^6.0.3":
+  version "6.0.3"
+  resolved "https://registry.npmmirror.com/@types/varint/-/varint-6.0.3.tgz"
+  integrity sha512-DHukoGWdJ2aYkveZJTB2rN2lp6m7APzVsoJQ7j/qy1fQxyamJTPD5xQzCMoJ2Qtgn0mE3wWeNOpbTyBFvF+dyA==
+  dependencies:
+    "@types/node" "*"
+
 "@types/webpack-env@^1.15.2":
   version "1.18.4"
   resolved "https://registry.npmmirror.com/@types/webpack-env/-/webpack-env-1.18.4.tgz"
@@ -5467,6 +5474,11 @@ js-message@1.0.7:
   resolved "https://registry.npmmirror.com/js-message/-/js-message-1.0.7.tgz"
   integrity sha512-efJLHhLjIyKRewNS9EGZ4UpI8NguuL6fKkhRxVuMmrGV2xN/0APGdQYwLFky5w9naebSZ0OwAGp0G6/2Cg90rA==
 
+js-sha3@^0.9.3:
+  version "0.9.3"
+  resolved "https://registry.npmmirror.com/js-sha3/-/js-sha3-0.9.3.tgz"
+  integrity sha512-BcJPCQeLg6WjEx3FE591wVAevlli8lxsxm9/FzV4HXkV49TmBH38Yvrpce6fjbADGMKFrBMGTqrVz3qPIZ88Gg==
+
 js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmmirror.com/js-tokens/-/js-tokens-4.0.0.tgz"
@@ -8412,6 +8424,11 @@ validate-npm-package-license@^3.0.1:
   dependencies:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
+
+varint@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.npmmirror.com/varint/-/varint-6.0.0.tgz"
+  integrity sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==
 
 varuint-bitcoin@^1.1.2:
   version "1.1.2"

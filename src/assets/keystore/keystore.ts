@@ -9,6 +9,7 @@ import * as bip39 from 'bip39';
 import * as tweetnacl from "tweetnacl";
 
 const Version_5 = 5;
+const Iter = 2500 //加密迭代次数，默认是25000，如果运行很慢可以改小
 
 class Keystore {
     saveKeyName: string;
@@ -115,16 +116,16 @@ class Keystore {
     private NewWallet(seed: Buffer, pwd: Buffer): Error | null {
         this.Salt = randomBytes(32);
         let nStartTime = Date.now();
-        this.Rounds = 25;
+        this.Rounds = Iter;
         AesManager.Pbkdf2Key(pwd, this.Salt, this.Rounds);
-        this.Rounds = Math.floor(2500 / (Date.now() - nStartTime));
+        this.Rounds = Math.floor((Iter*100) / (Date.now() - nStartTime));
         nStartTime = Date.now();
         AesManager.Pbkdf2Key(pwd, this.Salt, this.Rounds);
         this.Rounds = Math.floor(
             (this.Rounds + (this.Rounds * 100) / (Date.now() - nStartTime)) / 2
         );
-        if (this.Rounds < 25) {
-            this.Rounds = 25;
+        if (this.Rounds < Iter) {
+            this.Rounds = Iter;
         }
         const pbkdf2Key = AesManager.Pbkdf2Key(pwd, this.Salt, this.Rounds);
 

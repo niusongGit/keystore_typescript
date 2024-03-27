@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-      <button @click="testOfflineTx">点击按钮</button>
+      <button @click="testNewKeystore">点击按钮</button>
 <!--    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>-->
   </div>
 </template>
@@ -40,11 +40,12 @@ function testOfflineTx(){
 
 
 
-    const tx = CreateOfflineTx(key,pwd ,addrinfo.addrStr,B58String(addB),"comment",10,2,30,119,20,"domain",1)
+    const [hash,tx,errrtx] = CreateOfflineTx(key,pwd ,addrinfo.addrStr,B58String(addB),"comment",10,2,30,119,20,"domain",1)
 
-    if (tx instanceof Error) {
-        console.error("errrtx", tx)
+    if (errrtx instanceof Error) {
+        console.error("errrtx", errrtx)
     }
+    console.log("CreateOfflineTxHash:",hash)
     console.log("CreateOfflineTx:",tx)
     return
 }
