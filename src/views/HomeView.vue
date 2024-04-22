@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-      <button @click="testNewKeystore">点击按钮</button>
+      <button @click="testNoce">点击按钮</button>
 <!--    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>-->
   </div>
 </template>
@@ -13,6 +13,25 @@ import { AddressFromB58String,B58String, AddressCoin } from '@/assets/keystore/c
 import Keystore from "@/assets/keystore/keystore"
 import {CreateOfflineTx} from "@/assets/tx_offline/tx_offline"
 
+import { BigNumber } from 'bignumber.js';
+function testNoce(){
+    const bigNumber = new BigNumber('544534534535');
+
+    const hexString = bigNumber.toString(16);
+
+// 创建一个 Uint8Array 来存储转换后的结果
+    const byteArray = new Uint8Array(Math.ceil(hexString.length / 2));
+
+// 将十六进制字符串转换为字节数组
+    for (let i = 0; i < hexString.length; i += 2) {
+        const byte = parseInt(hexString.substr(i, 2), 16);
+        byteArray[i / 2] = byte;
+    }
+
+    console.log(byteArray)
+
+    return
+}
 
 
 function testOfflineTx(){

@@ -93,6 +93,20 @@ export function hash_SHA3_256(bs: Uint8Array): Uint8Array {
     return new Uint8Array(hash.arrayBuffer());
 }
 
+export function bignumberToUint8Array(b?:BigNumber):Uint8Array{
+    const hexString = b ? b.toString(16) : "";
+
+// 创建一个 Uint8Array 来存储转换后的结果
+    const byteArray = new Uint8Array(Math.ceil(hexString.length / 2));
+
+// 将十六进制字符串转换为字节数组
+    for (let i = 0; i < hexString.length; i += 2) {
+        const byte = parseInt(hexString.substr(i, 2), 16);
+        byteArray[i / 2] = byte;
+    }
+    return byteArray
+}
+
 export class TxBase {
     Hash?: Uint8Array;
     Type?: number;
@@ -206,15 +220,10 @@ export class TxBase {
        const TxBaseP = new TxBaseProto();
 
         this.Vin?.forEach((element, index) => {
-
-            const decimalString = element.Nonce?element.Nonce.toFixed():""; // 获取十进制字符串表示的 BigNumber
-            const textEncoder = new TextEncoder();
-            const byteArray = textEncoder.encode(decimalString);
-
             TxBaseP.Vin.push(new VinProto({
                 Puk: element.Puk,
                 sign: element.sign,
-                Nonce: byteArray
+                Nonce: bignumberToUint8Array(element.Nonce)
             }))
         });
 
@@ -289,8 +298,8 @@ export class TxBase {
         const value = 4;
         const encoded = encode(value);
         id.set(encoded);
-        console.log("id ",id)
-        console.log("hash_SHA3_256 ", hash_SHA3_256(new Uint8Array([1, 2, 3])))
+        // console.log("id ",id)
+        // console.log("hash_SHA3_256 ", hash_SHA3_256(new Uint8Array([1, 2, 3])))
         bs = new Uint8Array([...id, ...(hash_SHA3_256(bs) || new Uint8Array())]);
         this.Hash = bs;
         return;
@@ -316,12 +325,7 @@ export class Vin {
         let bs = new Uint8Array();
         bs = new Uint8Array([...bs, ...(this.Puk || new Uint8Array())]);
         bs = new Uint8Array([...bs, ...(this.sign || new Uint8Array())]);
-
-        const decimalString = this.Nonce?this.Nonce.toFixed():""; // 获取十进制字符串表示的 BigNumber
-        const textEncoder = new TextEncoder();
-        const byteArray = textEncoder.encode(decimalString);
-
-        bs = new Uint8Array([...bs, ...(byteArray || new Uint8Array())]);
+        bs = new Uint8Array([...bs, ...(bignumberToUint8Array(this.Nonce) || new Uint8Array())]);
         return bs
     }
 }
